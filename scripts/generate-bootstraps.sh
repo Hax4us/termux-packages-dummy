@@ -9,6 +9,8 @@ set -e
 BOOTSTRAP_TMPDIR=$(mktemp -d "${TMPDIR:-/tmp}/bootstrap-tmp.XXXXXXXX")
 trap 'rm -rf $BOOTSTRAP_TMPDIR' EXIT
 
+echo $BOOTSTRAP_TMPDIR
+
 # By default, bootstrap archives are compatible with Android >=7.0
 # and <10.
 BOOTSTRAP_ANDROID10_COMPATIBLE=false
@@ -85,6 +87,7 @@ pull_package() {
 	local package_name=$1
 	local package_tmpdir="${BOOTSTRAP_PKGDIR}/${package_name}"
 	mkdir -p "$package_tmpdir"
+	echo $package_tmpdir
 
 	local package_url
 	package_url="$REPO_BASE_URL/$(echo "${PACKAGE_METADATA[${package_name}]}" | grep -i "^Filename:" | awk '{ print $2 }')"
@@ -141,6 +144,7 @@ pull_package() {
 
 			# Extract files.
 			tar xf "$data_archive" -C "$BOOTSTRAP_ROOTFS"
+			ls $BOOTSTRAP_ROOTFS
 
 			if ! ${BOOTSTRAP_ANDROID10_COMPATIBLE}; then
 				# Register extracted files.
@@ -167,6 +171,26 @@ pull_package() {
 			fi
 		)
 	fi
+}
+
+extract_pkgs() {
+	cd /home/builder/termux-packages/pkgs
+	for pkg in *; do
+		echo $pkg
+	done
+
+	for pkg in * ; do
+		ar x $pkg
+		if [ -f "./data.tar.xz" ]; then
+			data_archive="data.tar.xz"               
+		elif [ -f "./data.tar.gz" ]; then     
+			data_archive="data.tar.gz"    
+		else         
+			echo "No data.tar.* found in '$pkg'."  
+			exit 1   
+		fi
+		tar xf $data_archive -C $BOOTSTRAP_ROOTFS
+	done
 }
 
 # Final stage: generate bootstrap archive and place it to current
@@ -296,7 +320,7 @@ for package_arch in "${TERMUX_ARCHITECTURES[@]}"; do
 	# Read package metadata.
 	unset PACKAGE_METADATA
 	declare -A PACKAGE_METADATA
-	read_package_list "$package_arch"
+	#read_package_list "$package_arch"
 
 	# Package manager.
 	if ! ${BOOTSTRAP_ANDROID10_COMPATIBLE}; then
@@ -306,48 +330,49 @@ for package_arch in "${TERMUX_ARCHITECTURES[@]}"; do
 	fi
 
 	# Core utilities.
-	pull_package bash
-	pull_package bzip2
-	if ! ${BOOTSTRAP_ANDROID10_COMPATIBLE}; then
-		pull_package command-not-found
-	else
-		pull_package proot
-	fi
-	pull_package coreutils
-	pull_package curl
-	pull_package dash
-	pull_package diffutils
-	pull_package findutils
-	pull_package gawk
-	pull_package grep
-	pull_package gzip
-	pull_package less
-	pull_package procps
-	pull_package psmisc
-	pull_package sed
-	pull_package tar
-	pull_package termux-exec
-	pull_package termux-tools
-	pull_package util-linux
-	pull_package xz-utils
+	#pull_package bash
+	#pull_package bzip2
+	#if ! ${BOOTSTRAP_ANDROID10_COMPATIBLE}; then
+	#	pull_package command-not-found
+	#else
+	#	pull_package proot
+	#fi
+	#pull_package coreutils
+	#pull_package curl
+	#pull_package dash
+	#pull_package diffutils
+	#pull_package findutils
+	#pull_package gawk
+	#pull_package grep
+	#pull_package gzip
+	#pull_package less
+	#pull_package procps
+	#pull_package psmisc
+	#pull_package sed
+	#pull_package tar
+	#pull_package termux-exec
+	#pull_package termux-tools
+	#pull_package util-linux
+	#pull_package xz-utils
 
 	# Additional.
-	pull_package ed
-	pull_package debianutils
-	pull_package dos2unix
-	pull_package inetutils
-	pull_package lsof
-	pull_package nano
-	pull_package net-tools
-	pull_package patch
-	pull_package unzip
+	#pull_package ed
+	#pull_package debianutils
+	#pull_package dos2unix
+	#pull_package inetutils
+	#pull_package lsof
+	#pull_package nano
+	#pull_package net-tools
+	#pull_package patch
+	#pull_package unzip
 
 	# Handle additional packages.
-	for add_pkg in "${ADDITIONAL_PACKAGES[@]}"; do
-		pull_package "$add_pkg"
-	done
-	unset add_pkg
+	#for add_pkg in "${ADDITIONAL_PACKAGES[@]}"; do
+	#	pull_package "$add_pkg"
+	#done
+	#unset add_pkg
 
 	# Create bootstrap archive.
+	extract_pkgs
 	create_bootstrap_archive "$package_arch"
 done

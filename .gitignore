@@ -12,6 +12,7 @@ scripts/.vagrant/
 
 # Built *.deb files.
 /debs/
+/pkgs/
 
 # Preinstalled build tools.
 /build-tools/

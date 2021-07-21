@@ -1,0 +1,5 @@
+#!/data/data/com.hax4us.andev/files/usr/bin/sh
+
+PACKAGE_NAME="com.hax4us.andev"
+
+/data/data/$PACKAGE_NAME/files/usr/share/android-sdk/tools/bin/sdkmanager --sdk_root=/data/data/$PACKAGE_NAME/files/usr/share/android-sdk "$@"

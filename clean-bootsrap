@@ -1,0 +1,4 @@
+rm pkgs/*.xz
+rm pkgs/*.gz
+rm pkgs/*.zip
+rm pkgs/debian-binary

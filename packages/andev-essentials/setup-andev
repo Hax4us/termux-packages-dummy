@@ -1,0 +1,78 @@
+#!/data/data/com.hax4us.andev/files/usr/bin/bash
+
+ANDEV_BOOTSTRAP=andev-bootstrap-aarch64
+TEMP_WORKDIR=$(mktemp -d)
+
+print_status() {
+    echo "[*] $1..."
+}
+
+print_error() {
+    echo "[!] $1"
+}
+
+check_internet() {
+    curl -s http://google.com > /dev/null
+    if [ $? -ne 0 ]; then
+        print_error "No internet connection"
+        exit 1
+    fi
+}
+
+download_bootstrap() {
+    cd $TEMP_WORKDIR
+    print_status "Downloading bootstrap file"
+    curl -O https://gitlab.com/Hax4us/andev/-/raw/master/$ANDEV_BOOTSTRAP.zip
+}
+
+unzip_bootstrap() {
+    print_status "Unzipping"
+    unzip $ANDEV_BOOTSTRAP.zip
+}
+
+check_integrity() {
+    print_status "Checking integrity"
+    curl -O https://gitlab.com/Hax4us/andev/-/raw/master/$ANDEV_BOOTSTRAP.zip.sha512sum
+    sha512sum -c $ANDEV_BOOTSTRAP.zip.sha512sum || {
+        print_error "Sorry :( to say your downloaded bootstrap file ws corrupted or half downloaded, but don't worry, just rerun script"
+        exit 1
+    } 
+}
+
+setup_bootstrap() {
+    print_status "Setting up"
+    rm -rf $PREFIX/share/android-sdk
+    mv android-sdk $PREFIX/share/
+
+    if [ ! -d $PREFIX/opt ]; then
+	mkdir $PREFIX/opt
+    fi
+
+    rm -rf $PREFIX/opt/gradle
+    mv gradle $PREFIX/opt/
+
+    rm -rf $PRERIX/lib/jvm/openjdk-11.0.1
+    mv openjdk-11.0.1 $PREFIX/lib/jvm/
+
+    # giving +x permission
+    chmod -R +x $PREFIX/lib/jvm/openjdk-11.0.1/bin
+    chmod -R +x $PREFIX/share/android-sdk/build-tools/29.0.3/
+    chmod -R +x $PREFIX/share/android-sdk/tools/bin/
+    chmod -R +x $PREFIX/opt/gradle/bin
+
+    # setting up soft links
+    ln -sf $PREFIX/opt/gradle/bin/gradle $PREFIX/bin/
+    ln -sf $PREFIX/lib/jvm/openjdk-11.0.1/bin/java{,c} $PREFIX/bin/
+}
+
+cleanup() {
+    rm -rf $TEMP_WORKDIR
+}
+
+# MAIN
+check_internet
+download_bootstrap
+check_integrity
+unzip_bootstrap
+setup_bootstrap
+cleanup
